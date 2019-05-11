@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+	<name>cecabank</name>
+	<displayName><![CDATA[Cecabank]]></displayName>
+	<version><![CDATA[0.1.0]]></version>
+	<description><![CDATA[Plugin de Prestashop para conectar con la pasarela de Cecabank.]]></description>
+	<author><![CDATA[Cecabank, S.A.]]></author>
+	<tab><![CDATA[payments_gateways]]></tab>
+	<is_configurable>1</is_configurable>
+</module>

@@ -250,6 +250,7 @@ class Cecabank extends PaymentModule
 
         $this->context->smarty->assign('path', $this->_path);
         $this->context->smarty->assign('static_token', Tools::getToken(false));
+        $this->context->smarty->assign('array_token', array('token' => Tools::getToken(false)));
 
         return $this->display(__FILE__, 'views/templates/hook/payment.tpl');
     }

@@ -27,7 +27,7 @@
  *}
 
 <p class="payment_module">
-    <a href="{$link->getModuleLink('cecabank', 'payment', array('token' => $static_token))}">
+    <a href="{$link->getModuleLink('cecabank', 'payment', $array_token)}">
         <img src="{$path|escape:'htmlall'}views/img/icons/cecabank.png" title="{l s='Paga con tu tarjeta.' mod='cecabank'}" alt="142x38.png" width="142" height="38" /><br /><br />
         {l s='Paga con tu tarjeta.' mod='cecabank'}
 	    <br class="clear" />

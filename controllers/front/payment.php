@@ -203,6 +203,42 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
     }
 
     protected function get_client_config() {
+        $lang = '1';
+        switch ($this->context->language->iso_code) {
+            case 'en':
+                $lang = '6';
+                break;
+            case 'fr':
+                $lang = '7';
+                break;
+            case 'de':
+                $lang = '8';
+                break;
+            case 'pt':
+                $lang = '9';
+                break;
+            case 'it':
+                $lang = '10';
+                break;
+            case 'ru':
+                $lang = '14';
+                break;
+            case 'no':
+                $lang = '15';
+                break;
+            case 'ca':
+                $lang = '2';
+                break;
+            case 'eu':
+                $lang = '3';
+                break;
+            case 'gl':
+                $lang = '4';
+                break;
+            default:
+                $lang = '1';
+                break;
+        }
         return array(
             'Environment' => Configuration::get('environment'),
             'MerchantID' => Configuration::get('merchant'),
@@ -212,7 +248,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             'TipoMoneda' => Configuration::get('currency'),
             'Exponente' => '2',
             'Cifrado' => 'SHA2',
-            'Idioma' => '1',
+            'Idioma' => $lang,
             'Pago_soportado' => 'SSL'
         );
     }

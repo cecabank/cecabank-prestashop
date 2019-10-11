@@ -44,10 +44,6 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
 
         parent::initContent();
 
-        if (!$this->isTokenValid()) {
-            throw new \Exception(sprintf('%s Error: (Invalid token)', $this->module->displayName));
-        }
-
         if (!$this->module->isPayment()) {
             throw new \Exception(sprintf(
                 '%s Error: (Inactive or incomplete module configuration)',

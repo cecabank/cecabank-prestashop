@@ -73,6 +73,8 @@ class Cecabank extends PaymentModule
             || !Configuration::get('secret_key')
             || !Configuration::get('terminal')
             || !Configuration::get('environment')
+            || !Configuration::get('title')
+            || !Configuration::get('description')
             || !Configuration::get('currency')) {
             $this->warning = $this->l('Module configuration is incomplete.');
         }
@@ -94,6 +96,8 @@ class Cecabank extends PaymentModule
             || !Configuration::updateValue('secret_key', '')
             || !Configuration::updateValue('terminal', '')
             || !Configuration::updateValue('environment', 'test')
+            || !Configuration::updateValue('title', 'Tarjeta')
+            || !Configuration::updateValue('description', 'Paga con tu tarjeta')
             || !Configuration::updateValue('currency', '978')
             || !$this->registerHook('payment')
             || !$this->registerHook('paymentReturn')
@@ -118,6 +122,8 @@ class Cecabank extends PaymentModule
             || !Configuration::deleteByName('secret_key')
             || !Configuration::deleteByName('terminal')
             || !Configuration::deleteByName('environment')
+            || !Configuration::deleteByName('title')
+            || !Configuration::deleteByName('description')
             || !Configuration::deleteByName('currency')
             || !parent::uninstall()) {
             return false;
@@ -147,6 +153,12 @@ class Cecabank extends PaymentModule
             if (!Tools::getValue('environment')) {
                 $this->_errors[] = $this->l('cecabank "environment" is required.');
             }
+            if (!Tools::getValue('title')) {
+                $this->_errors[] = $this->l('cecabank "title" is required.');
+            }
+            if (!Tools::getValue('description')) {
+                $this->_errors[] = $this->l('cecabank "description" is required.');
+            }
             if (!Tools::getValue('currency')) {
                 $this->_errors[] = $this->l('cecabank "currency" is required.');
             }
@@ -165,6 +177,8 @@ class Cecabank extends PaymentModule
             Configuration::updateValue('secret_key', Tools::getValue('secret_key'));
             Configuration::updateValue('terminal', Tools::getValue('terminal'));
             Configuration::updateValue('environment', Tools::getValue('environment'));
+            Configuration::updateValue('title', Tools::getValue('title'));
+            Configuration::updateValue('description', Tools::getValue('description'));
             Configuration::updateValue('currency', Tools::getValue('currency'));
         }
 
@@ -197,6 +211,8 @@ class Cecabank extends PaymentModule
             'secret_key',
             'terminal',
             'environment',
+            'title',
+            'description',
             'currency'
         ));
 
@@ -223,9 +239,12 @@ class Cecabank extends PaymentModule
         }
 
         $this->context->smarty->assign('path', $this->_path);
+        $this->context->smarty->assign('title', Configuration::get('title'));
+        $this->context->smarty->assign('description', Configuration::get('description'));
+        $this->context->smarty->assign('acquirer', Configuration::get('acquirer'));
 
         $paymentOption = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $paymentOption->setCallToActionText($this->l('Cecabank'))
+        $paymentOption->setCallToActionText(Configuration::get('title'))
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', array(
                 'token' => Tools::getToken(false)
             ), true))
@@ -251,6 +270,9 @@ class Cecabank extends PaymentModule
         $this->context->smarty->assign('path', $this->_path);
         $this->context->smarty->assign('static_token', Tools::getToken(false));
         $this->context->smarty->assign('array_token', array('token' => Tools::getToken(false)));
+        $this->context->smarty->assign('title', Configuration::get('title'));
+        $this->context->smarty->assign('description', Configuration::get('description'));
+        $this->context->smarty->assign('acquirer', Configuration::get('acquirer'));
 
         return $this->display(__FILE__, 'views/templates/hook/payment.tpl');
     }
@@ -309,6 +331,8 @@ class Cecabank extends PaymentModule
             || !Configuration::get('secret_key')
             || !Configuration::get('terminal')
             || !Configuration::get('environment')
+            || !Configuration::get('title')
+            || !Configuration::get('description')
             || !Configuration::get('currency')) {
             return false;
         }

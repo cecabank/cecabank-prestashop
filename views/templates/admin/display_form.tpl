@@ -84,6 +84,18 @@ fieldset a:hover {
             <p>{l s='Lo puede dejar en blanco para deshabilitar el plugin' mod='cecabank'}</p>
         </div>
         <div class="clear"></div>
+        <label>{l s='Título' mod='cecabank'}</label>
+        <div class="margin-form">
+            <input type="text" name="title" value="{$cecabank.config.title|escape:'htmlall':'UTF-8'}" />
+            <p>{l s='Lo puede dejar en blanco para deshabilitar el plugin' mod='cecabank'}</p>
+        </div>
+        <div class="clear"></div>
+        <label>{l s='Descripción' mod='cecabank'}</label>
+        <div class="margin-form">
+            <input type="text" name="description" value="{$cecabank.config.description|escape:'htmlall':'UTF-8'}" />
+            <p>{l s='Lo puede dejar en blanco para deshabilitar el plugin' mod='cecabank'}</p>
+        </div>
+        <div class="clear"></div>
         <label>{l s='Entorno' mod='cecabank'}</label>
         <div class="margin-form">
             <select name="environment">

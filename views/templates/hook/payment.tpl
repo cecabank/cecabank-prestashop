@@ -28,8 +28,8 @@
 
 <p class="payment_module">
     <a href="{$link->getModuleLink('cecabank', 'payment', $array_token)}">
-        <img src="{$path|escape:'htmlall'}views/img/icons/cecabank.png" title="{l s='Paga con tu tarjeta.' mod='cecabank'}" alt="142x38.png" width="142" height="38" /><br /><br />
-        {l s='Paga con tu tarjeta.' mod='cecabank'}
+        <img src="https://pgw.ceca.es/TPVvirtual/images/logo{$acquirer|escape:'htmlall'}.gif" title="{$title|escape:'htmlall'}" /><br /><br />
+        {$description|escape:'htmlall'}
 	    <br class="clear" />
     </a>
 </p>

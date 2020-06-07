@@ -26,9 +26,8 @@
  * to tpv@cecabank.es so we can send you a copy immediately.
  *}
 
-<section id="cecabank-payment-options">
-    <img src="{$path|escape:'htmlall'}views/img/icons/cecabank.png" alt="142x38.png" width="142" height="38" />
+<section id="cecabank-payment-options" style="text-align: center;">
+    <img src="https://pgw.ceca.es/TPVvirtual/images/logo{$acquirer|escape:'htmlall'}.gif"/>
     <br>
-    <br>
-    <p>{l s='Paga con tu tarjeta.' mod='cecabank'}</p>
+    <p>{$description|escape:'htmlall'}</p>
 </section>

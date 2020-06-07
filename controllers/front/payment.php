@@ -76,9 +76,12 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
                 $cart->id.'&id_module='.$this->module->id.'&id_order='.$this->module->currentOrder.'&key='.
                 $customer->secure_key;
         } else {
-            $url['return'] = $this->context->shop->getBaseURL() . 'index.php?controller=order-confirmation&id_cart='.
-                $cart->id.'&id_module='.$this->module->id.'&id_order='.$this->module->currentOrder.'&key='.
-                $customer->secure_key;
+            $url['return'] = $this->context->link->getPageLink('order-confirmation', null, null, array(
+                'id_cart' => $cart->id,
+                'id_module' => $this->module->id,
+                'key' => $customer->secure_key,
+                'id_order' => $this->module->currentOrder
+            ));
         }
 
         $config = $this-> get_client_config();

@@ -60,7 +60,13 @@ class CecabankValidationModuleFrontController extends ModuleFrontController
             Tools::redirect('index.php?controller=order&step=1');
         }
 
-        Tools::redirect('index.php?controller=order-confirmation&id_cart='.(int)$cart->id.'&id_module='.
-            (int)$this->module->id.'&id_order='.$this->module->currentOrder.'&key='.$customer->secure_key);
+        $url = $this->context->link->getPageLink('order-confirmation', null, null, array(
+            'id_cart' => (int)$cart->id,
+            'id_module' => (int)$this->module->id,
+            'key' => $customer->secure_key,
+            'id_order' => $this->module->currentOrder
+        ));
+
+        Tools::redirect($url);
     }
 }

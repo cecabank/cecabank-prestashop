@@ -27,7 +27,7 @@
  *}
 
 <section id="cecabank-payment-options" style="text-align: center;">
-    <img src="https://pgw.ceca.es/TPVvirtual/images/logo{$acquirer|escape:'htmlall'}.gif"/>
+    <img src="{$icon|escape:'htmlall'}"/>
     <br>
     <p>{$description|escape:'htmlall'}</p>
 </section>

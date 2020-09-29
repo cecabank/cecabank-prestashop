@@ -125,6 +125,12 @@ fieldset a:hover {
             </select>
         </div>
         <div class="clear"></div>
+        <label>{l s='Ícono' mod='cecabank'}</label>
+        <div class="margin-form">
+            <input type="text" name="icon" value="{$cecabank.config.icon|escape:'htmlall':'UTF-8'}" />
+            <p>{l s='Lo puede dejar en blanco para deshabilitar el plugin' mod='cecabank'}</p>
+        </div>
+        <div class="clear"></div>
         <div class="margin-form clear pspace"><input type="submit" name="submitUpdate" value="{l s='Guardar' mod='cecabank'}" class="button" /></div>
     </fieldset>
 </fieldset>

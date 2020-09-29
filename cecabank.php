@@ -75,7 +75,8 @@ class Cecabank extends PaymentModule
             || !Configuration::get('environment')
             || !Configuration::get('title')
             || !Configuration::get('description')
-            || !Configuration::get('currency')) {
+            || !Configuration::get('currency')
+            || !Configuration::get('icon')) {
             $this->warning = $this->l('Module configuration is incomplete.');
         }
         $this->registerHook('displayAdminOrderContentOrder');
@@ -99,6 +100,7 @@ class Cecabank extends PaymentModule
             || !Configuration::updateValue('title', 'Tarjeta')
             || !Configuration::updateValue('description', 'Paga con tu tarjeta')
             || !Configuration::updateValue('currency', '978')
+            || !Configuration::updateValue('icon', 'https://pgw.ceca.es/TPVvirtual/images/logo0000554000.gif')
             || !$this->registerHook('payment')
             || !$this->registerHook('paymentReturn')
             || !$this->registerHook('paymentOptions')
@@ -125,6 +127,7 @@ class Cecabank extends PaymentModule
             || !Configuration::deleteByName('title')
             || !Configuration::deleteByName('description')
             || !Configuration::deleteByName('currency')
+            || !Configuration::deleteByName('icon')
             || !parent::uninstall()) {
             return false;
         }
@@ -162,6 +165,9 @@ class Cecabank extends PaymentModule
             if (!Tools::getValue('currency')) {
                 $this->_errors[] = $this->l('cecabank "currency" is required.');
             }
+            if (!Tools::getValue('icon')) {
+                $this->_errors[] = $this->l('cecabank "icon" is required.');
+            }
         }
     }
 
@@ -180,6 +186,14 @@ class Cecabank extends PaymentModule
             Configuration::updateValue('title', Tools::getValue('title'));
             Configuration::updateValue('description', Tools::getValue('description'));
             Configuration::updateValue('currency', Tools::getValue('currency'));
+            $icon = Tools::getValue('icon');
+            $acquirer = Tools::getValue('acquirer');
+            if (strpos($icon, 'assets/images/icons/cecabank.png') !== false || 
+                ($acquirer && $acquirer !== '0000554000' && $icon === "https://pgw.ceca.es/TPVvirtual/images/logo0000554000.gif") ) {
+                Configuration::updateValue('icon', "https://pgw.ceca.es/TPVvirtual/images/logo".$acquirer.".gif");
+            } else {
+                Configuration::updateValue('icon', Tools::getValue('icon'));
+            }
         }
 
         $this->postValidation();
@@ -213,7 +227,8 @@ class Cecabank extends PaymentModule
             'environment',
             'title',
             'description',
-            'currency'
+            'currency',
+            'icon'
         ));
 
         $this->context->smarty->assign(array(
@@ -242,6 +257,7 @@ class Cecabank extends PaymentModule
         $this->context->smarty->assign('title', Configuration::get('title'));
         $this->context->smarty->assign('description', Configuration::get('description'));
         $this->context->smarty->assign('acquirer', Configuration::get('acquirer'));
+        $this->context->smarty->assign('icon', Configuration::get('icon'));
 
         $paymentOption = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $paymentOption->setCallToActionText(Configuration::get('title'))
@@ -273,6 +289,7 @@ class Cecabank extends PaymentModule
         $this->context->smarty->assign('title', Configuration::get('title'));
         $this->context->smarty->assign('description', Configuration::get('description'));
         $this->context->smarty->assign('acquirer', Configuration::get('acquirer'));
+        $this->context->smarty->assign('icon', Configuration::get('icon'));
 
         return $this->display(__FILE__, 'views/templates/hook/payment.tpl');
     }
@@ -333,7 +350,8 @@ class Cecabank extends PaymentModule
             || !Configuration::get('environment')
             || !Configuration::get('title')
             || !Configuration::get('description')
-            || !Configuration::get('currency')) {
+            || !Configuration::get('currency')
+            || !Configuration::get('icon')) {
             return false;
         }
 

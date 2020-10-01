@@ -188,12 +188,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
         // Create transaction
         $cecabank_client->setFormHiddens(array(
             'Num_operacion' => $cart->id,
-            'Descripcion' => printf(
-                '%09d - %s %s',
-                $cart->id,
-                $customer->firstname,
-                Tools::ucfirst(Tools::strtolower($customer->lastname))
-            ),
+            'Descripcion' => $cart->id.' - '.$customer->firstname.' '.Tools::ucfirst(Tools::strtolower($customer->lastname)),
             'Importe' => $amount,
             'URL_OK' => $url['return'],
             'URL_NOK' => $url['cancel'],
@@ -201,6 +196,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
         ));
         
         echo '<form id="cecabank-form" action="'.$cecabank_client->getPath().'" method="post">'.$cecabank_client->getFormHiddens().'</form>'.'<script>document.getElementById("cecabank-form").submit();</script>';
+        die();
     }
 
     protected function get_client_config() {

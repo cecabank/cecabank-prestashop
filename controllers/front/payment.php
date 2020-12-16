@@ -123,65 +123,142 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             }
         }
 
-        $acs = array(
-            'CARDHOLDER'        => array(
-                'NAME'          => $customer->firstname . ' ' . $customer->lastname,
-                'EMAIL'         => $customer->email,
-                'BILL_ADDRESS'  => array(
-                    'CITY'      => $address_invoice->city,
-                    'COUNTRY'   => $address_invoice->country,
-                    'LINE1'     => $address_invoice->address1,
-                    'LINE2'     => $address_invoice->address2,
-                    'LINE3'     => '',
-                    'POST_CODE' => $address_invoice->postcode,
-                    'STATE'     => ''
-                ),
-            ),
-            'PURCHASE'          => array(
-                'SHIP_ADDRESS'  => array(
-                    'CITY'      => $address->city,
-                    'COUNTRY'   => $address->country,
-                    'LINE1'     => $address->address1,
-                    'LINE2'     => $address->address2,
-                    'LINE3'     => '',
-                    'POST_CODE' => $address->postcode,
-                    'STATE'     => ''
-                ),
-                'MOBILE_PHONE'  => array(
-                    'CC'        => '',
-                    'SUBSCRIBER'=> $address->phone
-                ),
-                'WORK_PHONE'    => array(
-                    'CC'        => '',
-                    'SUBSCRIBER'=> ''
-                ),
-                'HOME_PHONE'    => array(
-                    'CC'        => '',
-                    'SUBSCRIBER'=> ''
-                ),
-            ),
-            'MERCHANT_RISK_IND' => array(
-                'SHIP_INDICATOR'=> 'CH_BILLING_ADDRESS',
-                'DELIVERY_TIMEFRAME' => 'TWO_MORE_DAYS',
-                'DELIVERY_EMAIL_ADDRESS' => $customer->email,
-                'REORDER_ITEMS_IND' => 'FIRST_TIME_ORDERED',
-                'PRE_ORDER_PURCHASE_IND' => 'AVAILABLE',
-                'PRE_ORDER_DATE'=> '',
-            ),
-            'ACCOUNT_INFO'      => array(
-                'CH_ACC_AGE_IND'=> $user_age,
-                'CH_ACC_CHANGE_IND' => $user_info_age,
-                'CH_ACC_CHANGE' => $registered,
-                'CH_ACC_DATE'   => $registered,
-                'TXN_ACTIVITY_DAY' => $txn_activity_today,
-                'TXN_ACTIVITY_YEAR' => $txn_activity_year,
-                'NB_PURCHASE_ACCOUNT' => $txn_purchase_6,
-                'SUSPICIOUS_ACC_ACTIVITY' => 'NO_SUSPICIOUS',
-                'SHIP_NAME_INDICATOR' => $ship_name_indicator,
-                'PAYMENT_ACC_IND' => $user_age,
-                'PAYMENT_ACC_AGE' => $registered
-            )
+        // ACS
+        $acs = array();
+
+        // Cardholder
+        $cardholder = array();
+        $add_cardholder = false;
+
+        // Cardholder bill address
+        $bill_address = array();
+        $add_bill_address = false;
+        if ($address_invoice->country) {
+            $bill_address['CITY'] = $address_invoice->country;
+            $add_bill_address = true;
+        }                
+        if ($address_invoice->country) {
+            $bill_address['COUNTRY'] = $address_invoice->country;
+            $add_bill_address = true;
+        }
+        if ($address_invoice->address1) {
+            $bill_address['LINE1'] = $address_invoice->address1;
+            $add_bill_address = true;
+        }                
+        if ($address_invoice->address2) {
+            $bill_address['LINE2'] = $address_invoice->address2;
+            $add_bill_address = true;
+        }
+        if ($address_invoice->postcode) {
+            $bill_address['POST_CODE'] = $address_invoice->postcode;
+            $add_bill_address = true;
+        } 
+        if ($add_bill_address) {
+            $cardholder['BILL_ADDRESS'] = $bill_address;
+            $add_cardholder = true;
+        }
+
+        // Cardholder name
+        if ($customer->firstname || $customer->lastname) {
+            $cardholder['NAME'] = $customer->firstname . ' ' . $customer->lastname;
+            $add_cardholder = true;
+        }
+
+        // Cardholder email
+        if ($customer->email) {
+            $cardholder['EMAIL'] = $customer->email;
+            $add_cardholder = true;
+        }
+
+        if ($add_cardholder) {
+            $acs['CARDHOLDER'] = $cardholder;
+        }
+
+        // Purchase
+        $purchase = array();
+        $add_purchase = true;
+
+        // Purchase ship address
+        $ship_address = array();
+        $add_ship_address = false;
+        if ($address->city) {
+            $ship_address['CITY'] = $address->city;
+            $add_ship_address = true;
+        }                
+        if ($address->country) {
+            $ship_address['COUNTRY'] = $address->country;
+            $add_ship_address = true;
+        }
+        if ($address->address1) {
+            $ship_address['LINE1'] = $address->address1;
+            $add_ship_address = true;
+        }                
+        if ($address->address2) {
+            $ship_address['LINE2'] = $address->address2;
+            $add_ship_address = true;
+        }
+        if ($address->postcode) {
+            $ship_address['POST_CODE'] = $address->postcode;
+            $add_ship_address = true;
+        }
+        if ($add_ship_address) {
+            $purchase['SHIP_ADDRESS'] = $ship_address;
+            $add_purchase = true;
+        }
+
+        // Purchase mobile phone
+        if ($address->phone) {
+            $purchase['MOBILE_PHONE'] = array(
+                'SUBSCRIBER' => $address->phone
+            );
+            $add_purchase = true;
+        }
+
+        if ($add_purchase) {
+            $acs['PURCHASE'] = $purchase;
+        }
+
+        // Merchant risk
+        $merchant_risk = array(
+            'SHIP_INDICATOR'=> 'CH_BILLING_ADDRESS',
+            'DELIVERY_TIMEFRAME' => 'TWO_MORE_DAYS',
+            'REORDER_ITEMS_IND' => 'FIRST_TIME_ORDERED',
+            'PRE_ORDER_PURCHASE_IND' => 'AVAILABLE',
         );
+        if ($customer->email) {
+            $merchant_risk['DELIVERY_EMAIL_ADDRESS'] = $customer->email;
+        }
+        $acs['MERCHANT_RISK_IND'] = $merchant_risk;
+
+        // Account info
+        $account_info = array(
+            'SUSPICIOUS_ACC_ACTIVITY' => 'NO_SUSPICIOUS'
+        );
+        if ($user_age) {
+            $account_info['CH_ACC_AGE_IND'] = $user_age;
+            $account_info['PAYMENT_ACC_IND'] = $user_age;
+        }
+        if ($user_info_age) {
+            $account_info['CH_ACC_CHANGE_IND'] = $user_info_age;
+        }
+        if ($registered) {
+            $account_info['CH_ACC_CHANGE'] = $registered;
+            $account_info['CH_ACC_DATE'] = $registered;
+            $account_info['PAYMENT_ACC_AGE'] = $registered;
+        }
+        if ($txn_activity_today) {
+            $account_info['TXN_ACTIVITY_DAY'] = $txn_activity_today;
+        }
+        if ($txn_activity_year) {
+            $account_info['TXN_ACTIVITY_YEAR'] = $txn_activity_year;
+        }
+        if ($txn_purchase_6) {
+            $account_info['NB_PURCHASE_ACCOUNT'] = $txn_purchase_6;
+        }
+        if ($ship_name_indicator) {
+            $account_info['SHIP_NAME_INDICATOR'] = $ship_name_indicator;
+        }
+        $acs['ACCOUNT_INFO'] = $account_info;
 
         $amount = number_format($cart->getOrderTotal(), 2);
 

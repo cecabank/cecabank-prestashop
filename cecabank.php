@@ -52,7 +52,7 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.1';
+        $this->version = '1.0.3';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '26f33953dc3c6c678b10fb0314dc92b2';
         $this->currencies = true;

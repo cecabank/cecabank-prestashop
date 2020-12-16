@@ -74,6 +74,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             $url['return'] = $this->context->shop->getBaseURL() . 'index.php?controller=order-confirmation&id_cart='.
                 $cart->id.'&id_module='.$this->module->id.'&id_order='.$this->module->currentOrder.'&key='.
                 $customer->secure_key;
+            $url['cancel'] = $this->context->shop->getBaseURL() . 'index.php?controller=order&step=3';
         } else {
             $url['return'] = $this->context->link->getPageLink('order-confirmation', null, null, array(
                 'id_cart' => $cart->id,
@@ -81,11 +82,6 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
                 'key' => $customer->secure_key,
                 'id_order' => $this->module->currentOrder
             ));
-        }
-
-        if (_PS_VERSION_ <= '1.5') {
-            $url['cancel'] = $this->context->shop->getBaseURL() . 'index.php?controller=order&step=3';
-        } else {
             $url['cancel'] = $this->context->link->getPageLink('order', null, null, array(
                 'step' => '3'
             ));

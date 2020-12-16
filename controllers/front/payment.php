@@ -67,8 +67,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
 
         $baseUrl = $this->context->shop->getBaseURL() . 'modules/' . $this->module->name;
         $url = array(
-            'notify' => $baseUrl . '/validation.php',
-            'cancel' => $this->context->shop->getBaseURL() . 'index.php?controller=order&step=3'
+            'notify' => $baseUrl . '/validation.php'
         );
 
         if (_PS_VERSION_ <= '1.5') {
@@ -81,6 +80,14 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
                 'id_module' => $this->module->id,
                 'key' => $customer->secure_key,
                 'id_order' => $this->module->currentOrder
+            ));
+        }
+
+        if (_PS_VERSION_ <= '1.5') {
+            $url['cancel'] = $this->context->shop->getBaseURL() . 'index.php?controller=order&step=3';
+        } else {
+            $url['cancel'] = $this->context->link->getPageLink('order', null, null, array(
+                'step' => '3'
             ));
         }
 

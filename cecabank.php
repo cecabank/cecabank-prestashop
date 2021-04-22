@@ -52,9 +52,9 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.3';
+        $this->version = '1.0.4';
         $this->author = 'Cecabank, S.A.';
-        $this->module_key = '26f33953dc3c6c678b10fb0314dc92b2';
+        $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;
         $this->currencies_mode = 'radio';
         $this->is_eu_compatible = 1;
@@ -408,7 +408,8 @@ class Cecabank extends PaymentModule
             'Exponente' => '2',
             'Cifrado' => 'SHA2',
             'Idioma' => '1',
-            'Pago_soportado' => 'SSL'
+            'Pago_soportado' => 'SSL',
+            'versionMod' => 'P-'.$this->version
         );
     }
 

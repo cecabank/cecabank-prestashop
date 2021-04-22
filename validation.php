@@ -43,7 +43,8 @@ function get_client_config() {
         'Exponente' => '2',
         'Cifrado' => 'SHA2',
         'Idioma' => '1',
-        'Pago_soportado' => 'SSL'
+        'Pago_soportado' => 'SSL',
+        'versionMod' => 'P-1.0.4'
     );
 }
 

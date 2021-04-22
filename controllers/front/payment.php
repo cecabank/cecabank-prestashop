@@ -272,7 +272,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             'Importe' => $amount,
             'URL_OK' => $url['return'],
             'URL_NOK' => $url['cancel'],
-            'datos_acs_20' => urlencode( json_encode( $acs ) )
+            'datos_acs_20' => base64_encode( str_replace( '[]', '{}', json_encode( $acs ) ) )
         ));
         
         echo '<form id="cecabank-form" action="'.$cecabank_client->getPath().'" method="post">'.$cecabank_client->getFormHiddens().'</form>'.'<script>document.getElementById("cecabank-form").submit();</script>';
@@ -326,7 +326,8 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             'Exponente' => '2',
             'Cifrado' => 'SHA2',
             'Idioma' => $lang,
-            'Pago_soportado' => 'SSL'
+            'Pago_soportado' => 'SSL',
+            'versionMod' => 'P-1.0.4'
         );
     }
 }

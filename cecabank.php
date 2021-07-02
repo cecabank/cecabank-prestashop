@@ -75,7 +75,6 @@ class Cecabank extends PaymentModule
             || !Configuration::get('environment')
             || !Configuration::get('title')
             || !Configuration::get('description')
-            || !Configuration::get('currency')
             || !Configuration::get('icon')) {
             $this->warning = $this->l('Module configuration is incomplete.');
         }
@@ -99,7 +98,6 @@ class Cecabank extends PaymentModule
             || !Configuration::updateValue('environment', 'test')
             || !Configuration::updateValue('title', 'Tarjeta')
             || !Configuration::updateValue('description', 'Paga con tu tarjeta')
-            || !Configuration::updateValue('currency', '978')
             || !Configuration::updateValue('icon', 'https://pgw.ceca.es/TPVvirtual/images/logo0000554000.gif')
             || !$this->registerHook('payment')
             || !$this->registerHook('paymentReturn')
@@ -126,7 +124,6 @@ class Cecabank extends PaymentModule
             || !Configuration::deleteByName('environment')
             || !Configuration::deleteByName('title')
             || !Configuration::deleteByName('description')
-            || !Configuration::deleteByName('currency')
             || !Configuration::deleteByName('icon')
             || !parent::uninstall()) {
             return false;
@@ -162,9 +159,6 @@ class Cecabank extends PaymentModule
             if (!Tools::getValue('description')) {
                 $this->_errors[] = $this->l('cecabank "description" is required.');
             }
-            if (!Tools::getValue('currency')) {
-                $this->_errors[] = $this->l('cecabank "currency" is required.');
-            }
             if (!Tools::getValue('icon')) {
                 $this->_errors[] = $this->l('cecabank "icon" is required.');
             }
@@ -185,7 +179,6 @@ class Cecabank extends PaymentModule
             Configuration::updateValue('environment', Tools::getValue('environment'));
             Configuration::updateValue('title', Tools::getValue('title'));
             Configuration::updateValue('description', Tools::getValue('description'));
-            Configuration::updateValue('currency', Tools::getValue('currency'));
             $icon = Tools::getValue('icon');
             $acquirer = Tools::getValue('acquirer');
             if (strpos($icon, 'assets/images/icons/cecabank.png') !== false || 
@@ -227,7 +220,6 @@ class Cecabank extends PaymentModule
             'environment',
             'title',
             'description',
-            'currency',
             'icon'
         ));
 
@@ -350,7 +342,6 @@ class Cecabank extends PaymentModule
             || !Configuration::get('environment')
             || !Configuration::get('title')
             || !Configuration::get('description')
-            || !Configuration::get('currency')
             || !Configuration::get('icon')) {
             return false;
         }
@@ -378,15 +369,18 @@ class Cecabank extends PaymentModule
         }
         $orderPayment = $orderPayments[0];
         $transaction_id = $orderPayment->transaction_id;
+
+        $config = $this-> get_client_config(); 
+        $cecabank_client = new Cecabank\Client($config);
+        $currency = new Currency($order->id_currency);
+
         $refund_data = array(
             'Num_operacion' => $order->id_cart,
             'Referencia' => $transaction_id,
             'Importe' => number_format($number, 2),
             'TIPO_ANU' => 'P',
+            'TipoMoneda' => $cecabank_client->getCurrencyCode($currency->iso_code)
         );
-
-        $config = $this-> get_client_config(); 
-        $cecabank_client = new Cecabank\Client($config);
         if ($cecabank_client->refund($refund_data)) {
             $this->refund_status = 1;
             $orderPayment->amount = '-'.number_format($number, 2);
@@ -404,7 +398,6 @@ class Cecabank extends PaymentModule
             'AcquirerBIN' => Configuration::get('acquirer'),
             'TerminalID' => Configuration::get('terminal'),
             'ClaveCifrado' => Configuration::get('secret_key'),
-            'TipoMoneda' => Configuration::get('currency'),
             'Exponente' => '2',
             'Cifrado' => 'SHA2',
             'Idioma' => '1',

@@ -104,27 +104,6 @@ fieldset a:hover {
             </select>
         </div>
         <div class="clear"></div>
-        <label>{l s='Moneda' mod='cecabank'}</label>
-        <div class="margin-form">
-            <select name="currency">
-                <option value="978" {if $cecabank.config.currency eq '978'}selected{/if}>{l s='EUR' mod='cecabank'}</option>
-                <option value="840" {if $cecabank.config.currency eq '840'}selected{/if}>{l s='USD' mod='cecabank'}</option>
-                <option value="826" {if $cecabank.config.currency eq '826'}selected{/if}>{l s='GBP' mod='cecabank'}</option>
-                <option value="392" {if $cecabank.config.currency eq '392'}selected{/if}>{l s='JPY' mod='cecabank'}</option>
-                <option value="32" {if $cecabank.config.currency eq '32'}selected{/if}>{l s='ARS' mod='cecabank'}</option>
-                <option value="124" {if $cecabank.config.currency eq '124'}selected{/if}>{l s='CAD' mod='cecabank'}</option>
-                <option value="152" {if $cecabank.config.currency eq '152'}selected{/if}>{l s='CLP' mod='cecabank'}</option>
-                <option value="170" {if $cecabank.config.currency eq '170'}selected{/if}>{l s='COP' mod='cecabank'}</option>
-                <option value="356" {if $cecabank.config.currency eq '356'}selected{/if}>{l s='INR' mod='cecabank'}</option>
-                <option value="484" {if $cecabank.config.currency eq '484'}selected{/if}>{l s='MXN' mod='cecabank'}</option>
-                <option value="604" {if $cecabank.config.currency eq '604'}selected{/if}>{l s='PEN' mod='cecabank'}</option>
-                <option value="756" {if $cecabank.config.currency eq '756'}selected{/if}>{l s='CHF' mod='cecabank'}</option>
-                <option value="986" {if $cecabank.config.currency eq '986'}selected{/if}>{l s='BRL' mod='cecabank'}</option>
-                <option value="937" {if $cecabank.config.currency eq '937'}selected{/if}>{l s='VEF' mod='cecabank'}</option>
-                <option value="949" {if $cecabank.config.currency eq '949'}selected{/if}>{l s='TRY' mod='cecabank'}</option>
-            </select>
-        </div>
-        <div class="clear"></div>
         <label>{l s='Ícono' mod='cecabank'}</label>
         <div class="margin-form">
             <input type="text" name="icon" value="{$cecabank.config.icon|escape:'htmlall':'UTF-8'}" />

@@ -272,6 +272,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             'Importe' => $amount,
             'URL_OK' => $url['return'],
             'URL_NOK' => $url['cancel'],
+            'TipoMoneda' => $cecabank_client->getCurrencyCode($currency->iso_code),
             'datos_acs_20' => base64_encode( str_replace( '[]', '{}', json_encode( $acs ) ) )
         ));
         
@@ -322,7 +323,6 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             'AcquirerBIN' => Configuration::get('acquirer'),
             'TerminalID' => Configuration::get('terminal'),
             'ClaveCifrado' => Configuration::get('secret_key'),
-            'TipoMoneda' => Configuration::get('currency'),
             'Exponente' => '2',
             'Cifrado' => 'SHA2',
             'Idioma' => $lang,

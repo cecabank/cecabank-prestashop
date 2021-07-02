@@ -39,7 +39,6 @@ function get_client_config() {
         'AcquirerBIN' => Configuration::get('acquirer'),
         'TerminalID' => Configuration::get('terminal'),
         'ClaveCifrado' => Configuration::get('secret_key'),
-        'TipoMoneda' => Configuration::get('currency'),
         'Exponente' => '2',
         'Cifrado' => 'SHA2',
         'Idioma' => '1',

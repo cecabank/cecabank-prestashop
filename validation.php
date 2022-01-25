@@ -73,17 +73,26 @@ $reference = Tools::getValue('Referencia');
 $importe = Tools::getValue('Importe');
 $cecabank = new Cecabank();
 
-$cecabank->validateOrder(
-    $cart->id,
-    _PS_OS_PAYMENT_,
-    ((int) $importe) / 100,
-    $cecabank->displayName,
-    $cecabank->l(sprintf('Cecabank transaction ID: %s.', $reference)),
-    array('transaction_id' => $reference),
-    null,
-    false,
-    $customer->secure_key,
-    null
-);
-
-die($cecabank_client->successCode());
+try {
+    $validateOrder = $cecabank->validateOrder(
+        $cart->id,
+        _PS_OS_PAYMENT_,
+        ((int) $importe) / 100,
+        $cecabank->displayName,
+        $cecabank->l(sprintf('Cecabank transaction ID: %s.', $reference)),
+        array('transaction_id' => $reference),
+        null,
+        false,
+        $customer->secure_key,
+        null
+    );
+} catch (\Exception $th) {
+    $order = new Order(Order::getOrderByCartId($cart->id));
+    if ($order->valid) {
+        $validateOrder = true;
+    }
+} finally {
+    if ($validateOrder) {
+        die($cecabank_client->successCode());
+    }
+}

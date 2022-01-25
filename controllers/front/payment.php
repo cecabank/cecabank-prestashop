@@ -327,7 +327,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             'Cifrado' => 'SHA2',
             'Idioma' => $lang,
             'Pago_soportado' => 'SSL',
-            'versionMod' => 'P-1.0.5'
+            'versionMod' => 'P-1.0.6'
         );
     }
 }

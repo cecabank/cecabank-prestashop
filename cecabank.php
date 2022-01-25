@@ -52,7 +52,7 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.5';
+        $this->version = '1.0.6';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;
@@ -79,7 +79,9 @@ class Cecabank extends PaymentModule
             $this->warning = $this->l('Module configuration is incomplete.');
         }
         $this->registerHook('displayAdminOrderContentOrder');
+        $this->registerHook('displayAdminOrderTabContent');
         $this->registerHook('displayAdminOrderTabOrder');
+        $this->registerHook('displayAdminOrderTabLink');
         $this->registerHook('displayBackOfficeHeader');
     }
 
@@ -103,7 +105,9 @@ class Cecabank extends PaymentModule
             || !$this->registerHook('paymentReturn')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('displayAdminOrderContentOrder')
+            || !$this->registerHook('displayAdminOrderTabContent')
             || !$this->registerHook('displayAdminOrderTabOrder')
+            || !$this->registerHook('displayAdminOrderTabLink')
             || !$this->registerHook('displayBackOfficeHeader')) {
             return false;
         }
@@ -352,13 +356,13 @@ class Cecabank extends PaymentModule
     public function hookBackOfficeHeader()
     {
         $this->refund_status = 0;
-        if (!isset($_GET['id_order'])  || !isset($_POST['pr'])) {
-            return;
+        if (!isset($_POST['id_order'])  || !isset($_POST['pr'])) {
+           return;
         }
 
-        $order = new Order($_GET['id_order']);
+        $order = new Order($_POST['id_order']);
         $number = str_replace(',', '.', $_POST['pr']);
-        $orderPayments = OrderPayment::getByOrderId($_GET['id_order']);
+        $orderPayments = OrderPayment::getByOrderId($_POST['id_order']);
         $paid = 0;
         foreach ($orderPayments as $orderPay) {
             $paid += (float) $orderPay->amount;
@@ -383,8 +387,8 @@ class Cecabank extends PaymentModule
         );
         if ($cecabank_client->refund($refund_data)) {
             $this->refund_status = 1;
-            $orderPayment->amount = '-'.number_format($number, 2);
-            $orderPayment->id = 0;
+            $orderPayment->amount -= (float) number_format($number, 2);
+            // $orderPayment->id = 0;
             $orderPayment->save();
         } else {
             $this->refund_status = 2;
@@ -416,11 +420,29 @@ class Cecabank extends PaymentModule
         return $this->display(__FILE__, 'views/templates/admin/order-content.tpl');
     }
 
+    public function hookDisplayAdminOrderTabContent($params)
+    {
+        $order_id = $params['id_order'];
+        $this->smarty->assign(array(
+            'url_refund' => '', 
+            'order_id' => $order_id,
+        ));
+        return $this->display(__FILE__, 'views/templates/admin/order-tab-content.tpl');
+    }
+
     public function hookDisplayAdminOrderTabOrder($params)
     {
         $this->smarty->assign(array(
             'ok' => $this->refund_status // isset($_POST['pr'])
         ));
         return $this->display(__FILE__, 'views/templates/admin/order-tab.tpl');
+    }
+
+    public function hookDisplayAdminOrderTabLink($params)
+    {
+        $this->smarty->assign(array(
+            'ok' => $this->refund_status // isset($_POST['pr'])
+        ));
+        return $this->display(__FILE__, 'views/templates/admin/order-tab-link.tpl');
     }
 }

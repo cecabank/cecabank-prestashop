@@ -258,7 +258,8 @@ class Cecabank extends PaymentModule
         $paymentOption = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $paymentOption->setCallToActionText(Configuration::get('title'))
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', array(
-                'token' => Tools::getToken(false)
+                'token' => Tools::getToken(false),
+                'random' => rand()
             ), true))
             ->setAdditionalInformation($this->context->smarty->fetch(
                 'module:cecabank/views/templates/hook/payment_options.tpl'
@@ -281,7 +282,7 @@ class Cecabank extends PaymentModule
 
         $this->context->smarty->assign('path', $this->_path);
         $this->context->smarty->assign('static_token', Tools::getToken(false));
-        $this->context->smarty->assign('array_token', array('token' => Tools::getToken(false)));
+        $this->context->smarty->assign('array_token', array('token' => Tools::getToken(false), 'random' => rand()));
         $this->context->smarty->assign('title', Configuration::get('title'));
         $this->context->smarty->assign('description', Configuration::get('description'));
         $this->context->smarty->assign('acquirer', Configuration::get('acquirer'));

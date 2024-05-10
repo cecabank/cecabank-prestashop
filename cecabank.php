@@ -52,7 +52,7 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.7';
+        $this->version = '1.0.8';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;
@@ -363,7 +363,7 @@ class Cecabank extends PaymentModule
 
         $order = new Order($_POST['id_order']);
         $number = str_replace(',', '.', $_POST['pr']);
-        $orderPayments = OrderPayment::getByOrderId($_POST['id_order']);
+        $orderPayments = $order->getOrderPaymentCollection();
         $paid = 0;
         foreach ($orderPayments as $orderPay) {
             $paid += (float) $orderPay->amount;

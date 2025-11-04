@@ -52,7 +52,7 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.8';
+        $this->version = '1.0.9';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;
@@ -305,8 +305,16 @@ class Cecabank extends PaymentModule
 
         $this->context->smarty->assign('path', $this->_path);
 
-        /* If PS version is >= 1.7 */
-        if (version_compare(_PS_VERSION_, '1.7', '>=')) {
+        /* If PS version is >= 9.0 */
+        if (version_compare(_PS_VERSION_, '9.0', '>=')) {
+            $this->context->smarty->assign(array(
+                'amount' => $this->context->getCurrentLocale()->formatPrice(
+                    $params['order']->getOrdersTotalPaid(),
+                    new Currency($params['order']->id_currency)
+                )
+            ));
+        } else if (version_compare(_PS_VERSION_, '1.7', '>=')) {
+            /* If PS version is >= 1.7 */
             $this->context->smarty->assign(array(
                 'amount' => Tools::displayPrice(
                     $params['order']->getOrdersTotalPaid(),

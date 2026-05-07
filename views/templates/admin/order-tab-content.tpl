@@ -33,6 +33,7 @@
       <form method="POST" action="{$url_refund}" class="card-details-form form-horizontal">
         <div class="form-group card-details-actions" style="display: flex">
           <input type="hidden" name="id_order" value="{$order_id}">
+          <input type="hidden" name="cecabank_refund_token" value="{$cecabank_refund_token|escape:'htmlall':'UTF-8'}">
           <input type="text" class="form-control" name="pr" value="0" id="input-partial-refund" style="margin-right: 10px">
           <button class="btn btn-primary" type="submit">Devolver</button>
         </div>

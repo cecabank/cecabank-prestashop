@@ -188,6 +188,12 @@ class Client
         $this->setValueLength('AcquirerBIN', 10);
         $this->setValueLength('TerminalID', 8);
 
+        foreach (array('URL_OK', 'URL_NOK', 'Descripcion') as $normField) {
+            if (isset($this->values[$normField]) && is_string($this->values[$normField])) {
+                $this->values[$normField] = str_replace(array('&amp;', '#038;'), array('&', ''), $this->values[$normField]);
+            }
+        }
+
         $options['Firma'] = $this->getSignature();
         $options['firma_acs_20'] = $this->makeHash($options['datos_acs_20'], false);
 
@@ -291,7 +297,9 @@ class Client
         $html = '';
 
         foreach ($this->hidden as $field => $value) {
-            $html .= "\n".'<input type="hidden" name="'.$field.'" value="'.$value.'" />';
+            $safeField = htmlspecialchars((string) $field, ENT_QUOTES, 'UTF-8');
+            $safeValue = htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+            $html .= "\n".'<input type="hidden" name="'.$safeField.'" value="'.$safeValue.'" />';
         }
 
         return trim($html);

@@ -31,6 +31,7 @@
   <div class="panel panel-total" id="wrapper-refund">
     <form method="POST" action="{$url_refund}">
       <input type="hidden" name="id_order" value="{$order_id}">
+      <input type="hidden" name="cecabank_refund_token" value="{$cecabank_refund_token|escape:'htmlall':'UTF-8'}">
       <input type="text" name="pr" value="0" id="input-partial-refund">
       <br>
       <button class="btn btn-default" type="submit">Devolver</button>

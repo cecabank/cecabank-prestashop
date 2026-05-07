@@ -366,12 +366,23 @@ class Cecabank extends PaymentModule
     public function hookBackOfficeHeader()
     {
         $this->refund_status = 0;
-        if (!isset($_POST['id_order'])  || !isset($_POST['pr'])) {
+        if (!isset($_POST['id_order']) || !isset($_POST['pr']) || !isset($_POST['cecabank_refund_token'])) {
            return;
         }
 
-        $order = new Order($_POST['id_order']);
-        $number = str_replace(',', '.', $_POST['pr']);
+        if (!$this->context->employee || !$this->context->employee->isLoggedBack()) {
+            return;
+        }
+
+        $order_id = (int) Tools::getValue('id_order');
+        $expected_token = $this->getRefundCsrfToken($order_id);
+        $received_token = (string) Tools::getValue('cecabank_refund_token');
+        if (!hash_equals($expected_token, $received_token)) {
+            return;
+        }
+
+        $order = new Order($order_id);
+        $number = str_replace(',', '.', Tools::getValue('pr'));
         $orderPayments = $order->getOrderPaymentCollection();
         $paid = 0;
         foreach ($orderPayments as $orderPay) {
@@ -405,6 +416,12 @@ class Cecabank extends PaymentModule
         }
     }
 
+    protected function getRefundCsrfToken($order_id)
+    {
+        $employee_id = $this->context->employee ? (int) $this->context->employee->id : 0;
+        return Tools::encrypt('cecabank-refund-' . (int) $order_id . '-' . $employee_id);
+    }
+
     protected function get_client_config() {
         $secret_key = Configuration::get('secret_key');
         $cifrado = strlen((string) $secret_key) === 8 ? 'SHA2' : 'HMAC';
@@ -426,8 +443,9 @@ class Cecabank extends PaymentModule
     {
         $order_id = $params['order']->id;
         $this->smarty->assign(array(
-            'url_refund' => '', 
+            'url_refund' => '',
             'order_id' => $order_id,
+            'cecabank_refund_token' => $this->getRefundCsrfToken($order_id),
         ));
         return $this->display(__FILE__, 'views/templates/admin/order-content.tpl');
     }
@@ -436,8 +454,9 @@ class Cecabank extends PaymentModule
     {
         $order_id = $params['id_order'];
         $this->smarty->assign(array(
-            'url_refund' => '', 
+            'url_refund' => '',
             'order_id' => $order_id,
+            'cecabank_refund_token' => $this->getRefundCsrfToken($order_id),
         ));
         return $this->display(__FILE__, 'views/templates/admin/order-tab-content.tpl');
     }

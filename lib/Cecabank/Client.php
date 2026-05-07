@@ -343,7 +343,7 @@ class Client
             $key .= $this->values[$field];
         }
 
-        return $this->makeHash($key);
+        return $this->makeHash($key, true, $this->values['Num_operacion']);
     }
 
     public function getRefundSignature()
@@ -359,7 +359,7 @@ class Client
             $key .= $this->values[$field];
         }
 
-        return $this->makeHash($key);
+        return $this->makeHash($key, true, $this->values['Num_operacion']);
     }
 
     public function checkTransaction(array $post)
@@ -379,17 +379,24 @@ class Client
             $key .= $post[$field];
         }
 
-        $signature = $this->makeHash($key);
+        $signature = $this->makeHash($key, true, $post['Num_operacion']);
 
-        if ($signature !== $post['Firma']) {
+        if (!hash_equals($signature, $post['Firma'])) {
             throw new Exception(sprintf('Signature not valid (%s != %s)', $signature, $post['Firma']));
         }
 
         return $post['Firma'];
     }
 
-    private function makeHash($message, $replace = true)
+    private function makeHash($message, $replace = true, $num_operacion = null)
     {
+        if ($this->options['Cifrado'] === 'HMAC') {
+            if ($num_operacion === null && isset($this->values['Num_operacion'])) {
+                $num_operacion = $this->values['Num_operacion'];
+            }
+            return $this->makeHmacSha256Hash($message, $replace, $num_operacion);
+        }
+
         $message = $this->options['ClaveCifrado'].$message;
 
         if ($this->options['Cifrado'] === 'SHA2') {
@@ -401,6 +408,51 @@ class Client
         }
 
         return sha1($message);
+    }
+
+    private function makeHmacSha256Hash($message, $replace, $num_operacion)
+    {
+        if (empty($num_operacion)) {
+            throw new Exception('Num_operacion is required to compute HMAC signature');
+        }
+
+        $cadena = $this->options['ClaveCifrado'].$message;
+        if ($replace) {
+            $cadena = str_replace('&amp;', '&', $cadena);
+        }
+
+        $hmacKey = $this->deriveHmacSha256Key($this->options['ClaveCifrado'], $num_operacion);
+        $hash = hash_hmac('sha256', $cadena, $hmacKey, true);
+
+        return base64_encode($hash);
+    }
+
+    private function deriveHmacSha256Key($claveComercio, $num_operacion)
+    {
+        $key3des = base64_decode($claveComercio);
+
+        $blockSize = 8;
+        $remainder = strlen($num_operacion) % $blockSize;
+        $padded = $num_operacion;
+        if ($remainder !== 0) {
+            $padded .= str_repeat("\0", $blockSize - $remainder);
+        }
+
+        $iv = str_repeat("\0", 8);
+
+        $encrypted = openssl_encrypt(
+            $padded,
+            'des-ede3-cbc',
+            $key3des,
+            OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING,
+            $iv
+        );
+
+        if ($encrypted === false) {
+            throw new Exception('Failed to derive HMAC key with 3DES');
+        }
+
+        return $encrypted;
     }
 
     public function successCode()

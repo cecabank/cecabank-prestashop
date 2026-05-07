@@ -75,7 +75,7 @@ fieldset a:hover {
         <label>{l s='Clave secreta' mod='cecabank'}</label>
         <div class="margin-form">
             <input type="text" name="secret_key" value="{$cecabank.config.secret_key|escape:'htmlall':'UTF-8'}" />
-            <p>{l s='Lo puede dejar en blanco para deshabilitar el plugin' mod='cecabank'}</p>
+            <p>{l s='Clave secreta dada por Cecabank. Si tiene 8 caracteres se usará el algoritmo SHA2; en otro caso (clave HMAC, normalmente 32 caracteres) se usará HMAC.' mod='cecabank'}</p>
         </div>
         <div class="clear"></div>
         <label>{l s='Terminal' mod='cecabank'}</label>

@@ -52,7 +52,7 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.10';
+        $this->version = '1.1.0';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;
@@ -406,14 +406,16 @@ class Cecabank extends PaymentModule
     }
 
     protected function get_client_config() {
+        $secret_key = Configuration::get('secret_key');
+        $cifrado = strlen((string) $secret_key) === 8 ? 'SHA2' : 'HMAC';
         return array(
             'Environment' => Configuration::get('environment'),
             'MerchantID' => Configuration::get('merchant'),
             'AcquirerBIN' => Configuration::get('acquirer'),
             'TerminalID' => Configuration::get('terminal'),
-            'ClaveCifrado' => Configuration::get('secret_key'),
+            'ClaveCifrado' => $secret_key,
             'Exponente' => '2',
-            'Cifrado' => 'SHA2',
+            'Cifrado' => $cifrado,
             'Idioma' => '1',
             'Pago_soportado' => 'SSL',
             'versionMod' => 'P-'.$this->version

@@ -33,17 +33,19 @@ require_once dirname(__FILE__) . '/cecabank.php';
 require_once dirname(__FILE__) . '/lib/Cecabank/Client.php';
 
 function get_client_config() {
+    $secret_key = Configuration::get('secret_key');
+    $cifrado = strlen((string) $secret_key) === 8 ? 'SHA2' : 'HMAC';
     return array(
         'Environment' => Configuration::get('environment'),
         'MerchantID' => Configuration::get('merchant'),
         'AcquirerBIN' => Configuration::get('acquirer'),
         'TerminalID' => Configuration::get('terminal'),
-        'ClaveCifrado' => Configuration::get('secret_key'),
+        'ClaveCifrado' => $secret_key,
         'Exponente' => '2',
-        'Cifrado' => 'SHA2',
+        'Cifrado' => $cifrado,
         'Idioma' => '1',
         'Pago_soportado' => 'SSL',
-        'versionMod' => 'P-1.0.10'
+        'versionMod' => 'P-1.1.0'
     );
 }
 

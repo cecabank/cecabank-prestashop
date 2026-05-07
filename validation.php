@@ -45,7 +45,7 @@ function get_client_config() {
         'Cifrado' => $cifrado,
         'Idioma' => '1',
         'Pago_soportado' => 'SSL',
-        'versionMod' => 'P-1.1.0'
+        'versionMod' => 'P-1.1.1'
     );
 }
 

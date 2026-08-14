@@ -52,7 +52,7 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.2';
+        $this->version = '1.1.3';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;
@@ -419,7 +419,12 @@ class Cecabank extends PaymentModule
     protected function getRefundCsrfToken($order_id)
     {
         $employee_id = $this->context->employee ? (int) $this->context->employee->id : 0;
-        return Tools::encrypt('cecabank-refund-' . (int) $order_id . '-' . $employee_id);
+        $data = 'cecabank-refund-' . (int) $order_id . '-' . $employee_id;
+        // Tools::encrypt() fue eliminado en PrestaShop 9; Tools::hash() existe desde 1.7
+        if (method_exists('Tools', 'hash')) {
+            return Tools::hash($data);
+        }
+        return Tools::encrypt($data);
     }
 
     protected function get_client_config() {

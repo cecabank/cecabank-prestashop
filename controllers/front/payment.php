@@ -319,7 +319,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
                 break;
         }
         $secret_key = Configuration::get('secret_key');
-        $cifrado = strlen((string) $secret_key) === 8 ? 'SHA2' : 'HMAC';
+        $cifrado = Cecabank::getCifradoForSecretKey($secret_key);
         return array(
             'Environment' => Configuration::get('environment'),
             'MerchantID' => Configuration::get('merchant'),

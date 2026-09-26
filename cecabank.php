@@ -40,6 +40,42 @@ try {
 
 class Cecabank extends PaymentModule
 {
+    /**
+     * Longitud de la clave secreta antigua, que firma con SHA2. Las claves nuevas
+     * (HMAC) tienen 32 caracteres. Única regla para elegir el cifrado y para
+     * mostrar el aviso de actualización de seguridad: ver isLegacySecretKey().
+     */
+    const LEGACY_SECRET_KEY_LENGTH = 8;
+
+    /** Enlaces del aviso de actualización de seguridad */
+    const SECURITY_PORTAL_URL = 'https://comercios.ceca.es/';
+    const SECURITY_BULLETIN_URL = 'https://comercios.ceca.es/docs_constpv/seguridad/TPV_Virtual_Boletin_de_Seguridad_0525_001.pdf';
+    /** URL del manual del plugin. Pendiente de que Cecabank facilite la definitiva; vacía = "Manual plugin" sin enlace. */
+    const PLUGIN_MANUAL_URL = '';
+
+    /** Incrementar al añadir hooks a $this->hooks para que las tiendas ya instaladas los registren. */
+    const HOOKS_VERSION = '2';
+
+    /** Hooks que usa el módulo. registerMissingHooks() registra los que falten en instalaciones existentes. */
+    protected $hooks = array(
+        'payment',
+        'paymentReturn',
+        'paymentOptions',
+        'displayAdminOrderContentOrder',
+        'displayAdminOrderTabContent',
+        'displayAdminOrderTabOrder',
+        'displayAdminOrderTabLink',
+        'displayBackOfficeHeader',
+        // Aviso de seguridad: displayAdminAfterHeader cubre las páginas Symfony (y las legacy en PS 1.7/8);
+        // displayDashboardTop cubre las páginas legacy de PS 8/9 (Escritorio incluido), cuyo layout no
+        // renderiza displayAdminAfterHeader. Una marca estática evita mostrarlo dos veces.
+        'displayAdminAfterHeader',
+        'displayDashboardTop',
+    );
+
+    /** El aviso de clave antigua ya se ha mostrado en esta petición (getContent() o uno de los hooks) */
+    protected static $secret_key_notice_shown = false;
+
     private $html = '';
     private $refund_status = 0;
 
@@ -102,17 +138,70 @@ class Cecabank extends PaymentModule
             || !Configuration::updateValue('title', 'Tarjeta')
             || !Configuration::updateValue('description', 'Paga con tu tarjeta')
             || !Configuration::updateValue('icon', 'https://pgw.ceca.es/TPVvirtual/images/logo0000554000.gif')
-            || !$this->registerHook('payment')
-            || !$this->registerHook('paymentReturn')
-            || !$this->registerHook('paymentOptions')
-            || !$this->registerHook('displayAdminOrderContentOrder')
-            || !$this->registerHook('displayAdminOrderTabContent')
-            || !$this->registerHook('displayAdminOrderTabOrder')
-            || !$this->registerHook('displayAdminOrderTabLink')
-            || !$this->registerHook('displayBackOfficeHeader')) {
+            || !$this->registerHooks()) {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Registra los hooks de $this->hooks que falten y anota la versión de la lista.
+     *
+     * @return bool
+     */
+    protected function registerHooks()
+    {
+        foreach ($this->hooks as $hook) {
+            if (!$this->isHookRegistered($hook) && !$this->registerHook($hook)) {
+                return false;
+            }
+        }
+
+        return Configuration::updateValue('CECABANK_HOOKS_VERSION', self::HOOKS_VERSION);
+    }
+
+    /**
+     * Indica si el módulo ya está registrado en un hook.
+     *
+     * Además de isRegisteredInHook(), que resuelve alias (paymentReturn -> displayPaymentReturn),
+     * comprueba el nombre literal: en PrestaShop 8/9 las instalaciones antiguas quedan
+     * registradas en la fila del alias y registerHook() volvería a insertarla, provocando
+     * un error de clave duplicada.
+     *
+     * @param string $hook
+     *
+     * @return bool
+     */
+    protected function isHookRegistered($hook)
+    {
+        if ($this->isRegisteredInHook($hook)) {
+            return true;
+        }
+
+        return (bool) Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'hook_module` hm
+            INNER JOIN `' . _DB_PREFIX_ . 'hook` h ON h.`id_hook` = hm.`id_hook`
+            WHERE hm.`id_module` = ' . (int) $this->id . ' AND h.`name` = \'' . pSQL($hook) . '\''
+        );
+    }
+
+    /**
+     * Registra los hooks que falten en tiendas que ya tenían el módulo instalado.
+     *
+     * Los hooks nuevos (por ejemplo displayAdminAfterHeader) no se registran solos
+     * al actualizar los ficheros del módulo. Se ejecuta en cada página del back
+     * office (hookBackOfficeHeader) y solo hace trabajo cuando HOOKS_VERSION cambia.
+     * Alternativa manual: "Reiniciar" el módulo desde el gestor de módulos.
+     *
+     * @return bool
+     */
+    public function registerMissingHooks()
+    {
+        if (!$this->id || Configuration::get('CECABANK_HOOKS_VERSION') === self::HOOKS_VERSION) {
+            return true;
+        }
+
+        return $this->registerHooks();
     }
 
     /**
@@ -130,6 +219,7 @@ class Cecabank extends PaymentModule
             || !Configuration::deleteByName('title')
             || !Configuration::deleteByName('description')
             || !Configuration::deleteByName('icon')
+            || !Configuration::deleteByName('CECABANK_HOOKS_VERSION')
             || !parent::uninstall()) {
             return false;
         }
@@ -192,6 +282,12 @@ class Cecabank extends PaymentModule
             } else {
                 Configuration::updateValue('icon', Tools::getValue('icon'));
             }
+        }
+
+        // Aviso de actualización de seguridad: clave antigua de 8 caracteres en la tienda del contexto
+        if (self::isLegacySecretKey(Configuration::get('secret_key'))) {
+            $this->html .= $this->displayWarning($this->getSecretKeyNoticeHtml());
+            self::$secret_key_notice_shown = true;
         }
 
         $this->postValidation();
@@ -367,6 +463,9 @@ class Cecabank extends PaymentModule
 
     public function hookBackOfficeHeader()
     {
+        // Registra los hooks nuevos en tiendas que ya tenían el módulo instalado
+        $this->registerMissingHooks();
+
         $this->refund_status = 0;
         if (!isset($_POST['id_order']) || !isset($_POST['pr']) || !isset($_POST['cecabank_refund_token'])) {
            return;
@@ -431,7 +530,7 @@ class Cecabank extends PaymentModule
 
     protected function get_client_config() {
         $secret_key = Configuration::get('secret_key');
-        $cifrado = strlen((string) $secret_key) === 8 ? 'SHA2' : 'HMAC';
+        $cifrado = self::getCifradoForSecretKey($secret_key);
         return array(
             'Environment' => Configuration::get('environment'),
             'MerchantID' => Configuration::get('merchant'),
@@ -444,6 +543,157 @@ class Cecabank extends PaymentModule
             'Pago_soportado' => 'SSL',
             'versionMod' => 'P-'.$this->version
         );
+    }
+
+    /**
+     * Indica si la clave secreta es la antigua de 8 caracteres (firma SHA2).
+     *
+     * Es la única comprobación de longitud de clave del módulo: la usan la
+     * elección del cifrado (getCifradoForSecretKey) y el aviso de seguridad.
+     *
+     * @param string $secret_key
+     *
+     * @return bool
+     */
+    public static function isLegacySecretKey($secret_key)
+    {
+        return strlen((string) $secret_key) === self::LEGACY_SECRET_KEY_LENGTH;
+    }
+
+    /**
+     * Cifrado que corresponde a la clave configurada: SHA2 para la clave antigua
+     * de 8 caracteres, HMAC para las nuevas.
+     *
+     * @param string $secret_key
+     *
+     * @return string
+     */
+    public static function getCifradoForSecretKey($secret_key)
+    {
+        return self::isLegacySecretKey($secret_key) ? 'SHA2' : 'HMAC';
+    }
+
+    /**
+     * Aviso global del back office en las páginas Symfony (PrestaShop 1.7 a 9) y en las
+     * páginas legacy de PrestaShop 1.7/8, cuando alguna tienda sigue configurada con la
+     * clave antigua de 8 caracteres.
+     *
+     * @param array $params
+     *
+     * @return string
+     */
+    public function hookDisplayAdminAfterHeader($params)
+    {
+        return $this->renderSecretKeyNoticeOnce();
+    }
+
+    /**
+     * Mismo aviso para las páginas legacy de PrestaShop 8/9 (Escritorio incluido), cuyo
+     * layout no renderiza displayAdminAfterHeader pero sí displayDashboardTop.
+     *
+     * @param array $params
+     *
+     * @return string
+     */
+    public function hookDisplayDashboardTop($params)
+    {
+        return $this->renderSecretKeyNoticeOnce();
+    }
+
+    /**
+     * Devuelve el aviso global una sola vez por petición. Depende solo de la longitud
+     * de la clave, no de que el método de pago esté activo o configurado por completo.
+     * En la página de configuración del módulo no se repite: getContent() ya lo muestra.
+     *
+     * @return string
+     */
+    protected function renderSecretKeyNoticeOnce()
+    {
+        if (self::$secret_key_notice_shown) {
+            return '';
+        }
+
+        $shops = $this->getShopsWithLegacySecretKey();
+        if (!count($shops)) {
+            return '';
+        }
+        self::$secret_key_notice_shown = true;
+
+        return $this->displayWarning($this->getSecretKeyNoticeHtml(Shop::isFeatureActive() ? $shops : array()));
+    }
+
+    /**
+     * Nombres de las tiendas activas cuya clave secreta sigue siendo la antigua de 8 caracteres.
+     *
+     * @return array
+     */
+    protected function getShopsWithLegacySecretKey()
+    {
+        $shops = array();
+        foreach (Shop::getShops(true) as $shop) {
+            $secret_key = Configuration::get('secret_key', null, (int) $shop['id_shop_group'], (int) $shop['id_shop']);
+            if (self::isLegacySecretKey($secret_key)) {
+                $shops[] = $shop['name'];
+            }
+        }
+
+        return $shops;
+    }
+
+    /**
+     * HTML del aviso de actualización de seguridad (clave antigua de 8 caracteres).
+     *
+     * Los textos pasan por $this->l(), que escapa HTML, así que los enlaces se
+     * insertan después con marcadores de sprintf.
+     *
+     * @param array $shop_names Tiendas afectadas; solo se listan en multitienda
+     *
+     * @return string
+     */
+    protected function getSecretKeyNoticeHtml(array $shop_names = array())
+    {
+        $close = '</a>';
+        $manual = self::PLUGIN_MANUAL_URL !== ''
+            ? $this->getNoticeLinkOpen(self::PLUGIN_MANUAL_URL) . $this->l('Manual plugin') . $close
+            : $this->l('Manual plugin');
+
+        $html = '<p><strong>' . $this->l('Acción requerida: actualización de seguridad pendiente') . '</strong></p>';
+        $html .= '<p>' . $this->l('Tu comercio está configurado con una clave de 8 caracteres. Para completar la adaptación de seguridad debes:') . '</p>';
+        // Estilo inline: el tema legacy del back office quita las viñetas de las listas dentro de las alertas
+        $html .= '<ul style="list-style:disc;padding-left:20px;margin:5px 0;">';
+        $html .= '<li>' . sprintf(
+            $this->l('Configurar la nueva clave de 32 caracteres que puedes encontrar en el %1$sPortal de Administración del TPV Virtual%2$s, en la configuración de tu comercio.'),
+            $this->getNoticeLinkOpen(self::SECURITY_PORTAL_URL),
+            $close
+        ) . '</li>';
+        $html .= '<li>📖 ' . sprintf(
+            $this->l('Más información: %1$sBoletín de Seguridad%2$s · %3$s'),
+            $this->getNoticeLinkOpen(self::SECURITY_BULLETIN_URL),
+            $close,
+            $manual
+        ) . '</li>';
+        $html .= '</ul>';
+        $html .= '<p>' . $this->l('Si ya has completado estas actualizaciones, puedes ignorar este mensaje.') . '</p>';
+        if (count($shop_names)) {
+            $html .= '<p>' . sprintf(
+                $this->l('Tiendas afectadas: %s'),
+                htmlspecialchars(implode(', ', $shop_names), ENT_QUOTES, 'UTF-8')
+            ) . '</p>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * Apertura de un enlace del aviso, en pestaña nueva y sin acceso a window.opener.
+     *
+     * @param string $url
+     *
+     * @return string
+     */
+    protected function getNoticeLinkOpen($url)
+    {
+        return '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener">';
     }
 
     /**

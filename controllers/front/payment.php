@@ -65,9 +65,10 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             ));
         }
 
-        $baseUrl = $this->context->shop->getBaseURL() . 'modules/' . $this->module->name;
+        // La URL de comunicación online se configura en la consola de Cecabank,
+        // no se envía en el formulario. Ver Cecabank::getNotificationUrl().
         $url = array(
-            'notify' => $baseUrl . '/validation.php'
+            'notify' => $this->module->getNotificationUrl()
         );
 
         if (_PS_VERSION_ <= '1.5') {
@@ -329,7 +330,7 @@ class CecabankPaymentModuleFrontController extends ModuleFrontController
             'Cifrado' => $cifrado,
             'Idioma' => $lang,
             'Pago_soportado' => 'SSL',
-            'versionMod' => 'P-1.1.3'
+            'versionMod' => 'P-' . $this->module->version
         );
     }
 }

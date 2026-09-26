@@ -27,74 +27,34 @@
  * to tpv@cecabank.es so we can send you a copy immediately.
  */
 
+/*
+ * Endpoint LEGADO de la comunicación online:
+ *   {tienda}/modules/cecabank/validation.php
+ *
+ * Se mantiene para los comercios en PrestaShop < 9 que ya tienen esta URL
+ * configurada en la consola de Cecabank.
+ *
+ * PrestaShop 9 bloquea el acceso directo a los ficheros .php de /modules
+ * mediante modules/.htaccess (responde 403), por lo que en PrestaShop >= 9
+ * hay que configurar la URL del controlador front "validation", que se
+ * muestra en la página de configuración del módulo:
+ *   {tienda}/index.php?fc=module&module=cecabank&controller=validation
+ */
+
 require_once dirname(__FILE__) . '/../../config/config.inc.php';
 require_once dirname(__FILE__) . '/../../init.php';
 require_once dirname(__FILE__) . '/cecabank.php';
-require_once dirname(__FILE__) . '/lib/Cecabank/Client.php';
 
-function get_client_config() {
-    $secret_key = Configuration::get('secret_key');
-    $cifrado = 'SHA2';
-    return array(
-        'Environment' => Configuration::get('environment'),
-        'MerchantID' => Configuration::get('merchant'),
-        'AcquirerBIN' => Configuration::get('acquirer'),
-        'TerminalID' => Configuration::get('terminal'),
-        'ClaveCifrado' => $secret_key,
-        'Exponente' => '2',
-        'Cifrado' => $cifrado,
-        'Idioma' => '1',
-        'Pago_soportado' => 'SSL',
-        'versionMod' => 'P-1.1.3'
-    );
-}
-
-$config = get_client_config();
-$cecabank_client = new Cecabank\Client($config);
-
-try {
-    $cecabank_client->checkTransaction($_POST);
-} catch (\Exception $e) {
-    throw new \Exception('Invalid notification, nothing todo.');
-}
-
-$cart_id = Tools::getValue('Num_operacion');
-
-try {
-    if ((!$cart = new Cart((int) $cart_id)) || !is_object($cart) || $cart->id === null) {
-        throw new \Exception(sprintf('Unable to load cart by card id "%d".', $cart_id));
-    }
-    if ((!$customer = new Customer($cart->id_customer))) {
-        throw new \Exception('Invalid or missing customer secure key for this transaction.');
-    }
-} catch (\Exception $e) {
-    throw $e;
-}
-
-$reference = Tools::getValue('Referencia');
-$importe = Tools::getValue('Importe');
 $cecabank = new Cecabank();
 
 try {
-    $validateOrder = $cecabank->validateOrder(
-        $cart->id,
-        _PS_OS_PAYMENT_,
-        ((int) $importe) / 100,
-        $cecabank->displayName,
-        $cecabank->l(sprintf('Cecabank transaction ID: %s.', $reference)),
-        array('transaction_id' => $reference),
-        null,
-        false,
-        $customer->secure_key,
-        null
-    );
-} catch (\Exception $th) {
-    $order = new Order(Order::getOrderByCartId($cart->id));
-    if ($order->valid) {
-        $validateOrder = true;
-    }
-} finally {
-    if ($validateOrder) {
-        die($cecabank_client->successCode());
-    }
+    $result = $cecabank->processNotification($_POST);
+} catch (\Exception $e) {
+    $cecabank->logNotificationError($e->getMessage());
+    header('HTTP/1.1 400 Bad Request');
+    header('Content-Type: text/plain; charset=utf-8');
+    die('Invalid notification, nothing todo.');
 }
+
+header('Content-Type: text/plain; charset=utf-8');
+die($result);

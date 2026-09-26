@@ -27,46 +27,59 @@
  * to tpv@cecabank.es so we can send you a copy immediately.
  */
 
-require_once dirname(__FILE__) . '/../../lib/Cecabank/Client.php';
+if (!defined('_PS_VERSION_')) {
+    exit();
+}
 
+/**
+ * Controlador de la comunicación online (notificación servidor a servidor).
+ *
+ * URL: {tienda}/index.php?fc=module&module=cecabank&controller=validation
+ * (o {tienda}/module/cecabank/validation con URLs amigables). Es la URL que
+ * hay que configurar como "URL de comunicación online" en la consola de
+ * Cecabank; se muestra en la página de configuración del módulo.
+ *
+ * PrestaShop 9 bloquea el acceso directo a los ficheros .php de /modules
+ * mediante modules/.htaccess, por lo que la antigua URL
+ * {tienda}/modules/cecabank/validation.php deja de funcionar. Este
+ * controlador pasa por el Dispatcher de PrestaShop y no se ve afectado.
+ */
 class CecabankValidationModuleFrontController extends ModuleFrontController
 {
+    /** Cecabank notifica por HTTPS; así la URL generada usa el dominio SSL de la tienda. */
+    public $ssl = true;
+
     /**
+     * Recibe la notificación de la pasarela, verifica la firma y registra el pedido.
      *
      * @see FrontController::postProcess()
      */
     public function postProcess()
     {
-        $cart = $this->context->cart;
-        if ($cart->id_customer == 0 || $cart->id_address_delivery == 0 || $cart->id_address_invoice == 0 ||
-            !$this->module->active) {
-            Tools::redirect('index.php?controller=order&step=1');
+        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST)) {
+            $this->respond(400, 'Invalid notification, nothing todo.');
         }
 
-        // Check that this payment option is still available in case the customer changed his address
-        // just before the end of the checkout process
-        $authorized = false;
-        foreach (Module::getPaymentModules() as $module) {
-            if ($module['name'] == 'cecabank') {
-                $authorized = true;
-                break;
-            }
-        }
-        if (!$authorized) {
-            die($this->module->l('This payment method is not available.', 'validation'));
-        }
-        $customer = new Customer($cart->id_customer);
-        if (!Validate::isLoadedObject($customer)) {
-            Tools::redirect('index.php?controller=order&step=1');
+        try {
+            $result = $this->module->processNotification($_POST);
+        } catch (Exception $e) {
+            $this->module->logNotificationError($e->getMessage());
+            $this->respond(400, 'Invalid notification, nothing todo.');
         }
 
-        $url = $this->context->link->getPageLink('order-confirmation', null, null, array(
-            'id_cart' => (int)$cart->id,
-            'id_module' => (int)$this->module->id,
-            'key' => $customer->secure_key,
-            'id_order' => $this->module->currentOrder
-        ));
+        $this->respond(200, $result);
+    }
 
-        Tools::redirect($url);
+    /**
+     * Devuelve una respuesta en texto plano y termina la ejecución.
+     *
+     * @param int $status Código HTTP
+     * @param string $body Cuerpo de la respuesta
+     */
+    private function respond($status, $body)
+    {
+        http_response_code((int) $status);
+        header('Content-Type: text/plain; charset=utf-8');
+        die($body);
     }
 }

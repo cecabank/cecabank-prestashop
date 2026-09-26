@@ -52,14 +52,15 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.3';
+        $this->version = '1.1.4';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;
         $this->currencies_mode = 'radio';
         $this->is_eu_compatible = 1;
         $this->controllers = array(
-            'payment'
+            'payment',
+            'validation'
         );
         parent::__construct();
         $this->page = basename(__FILE__, '.php');
@@ -213,7 +214,8 @@ class Cecabank extends PaymentModule
         $dfl = array(
             'action' => $_SERVER['REQUEST_URI'],
             'img_path' => $this->_path . 'views/img/icons/cecabank.png',
-            'path' => $this->_path
+            'path' => $this->_path,
+            'notification_url' => $this->getNotificationUrl()
         );
 
         $config = Configuration::getMultiple(array(
@@ -442,6 +444,139 @@ class Cecabank extends PaymentModule
             'Pago_soportado' => 'SSL',
             'versionMod' => 'P-'.$this->version
         );
+    }
+
+    /**
+     * URL de comunicación online que debe configurarse en la consola de Cecabank.
+     *
+     * Apunta al controlador front "validation", que pasa por el Dispatcher de
+     * PrestaShop y por tanto no lo bloquea el modules/.htaccess de PrestaShop 9.
+     *
+     * @return string
+     */
+    public function getNotificationUrl()
+    {
+        return $this->context->link->getModuleLink($this->name, 'validation', array(), true);
+    }
+
+    /**
+     * Configuración del cliente para verificar la comunicación online.
+     *
+     * La firma de la notificación se verifica siempre con SHA2, sea cual sea la
+     * longitud de la clave secreta (corrección introducida en la versión 1.1.2).
+     *
+     * @return array
+     */
+    public function getNotificationClientConfig()
+    {
+        $config = $this->get_client_config();
+        $config['Cifrado'] = 'SHA2';
+        return $config;
+    }
+
+    /**
+     * Procesa la comunicación online de Cecabank y registra el pedido.
+     *
+     * Lo usan tanto el controlador front "validation" como el fichero legado
+     * validation.php de la raíz del módulo.
+     *
+     * @param array $post Datos POST enviados por la pasarela
+     *
+     * @return string Código de éxito que espera la pasarela
+     *
+     * @throws Exception Si la notificación no es válida o el pedido no puede validarse
+     */
+    public function processNotification(array $post)
+    {
+        $cecabank_client = new Cecabank\Client($this->getNotificationClientConfig());
+        $cecabank_client->checkTransaction($post);
+
+        $cart_id = (int) $post['Num_operacion'];
+        $cart = new Cart($cart_id);
+        if (!Validate::isLoadedObject($cart)) {
+            throw new Exception(sprintf('Unable to load cart by cart id "%d".', $cart_id));
+        }
+
+        $customer = new Customer((int) $cart->id_customer);
+        if (!Validate::isLoadedObject($customer)) {
+            throw new Exception(sprintf('Invalid or missing customer for cart id "%d".', $cart_id));
+        }
+
+        // Notificación reenviada: el pedido ya está registrado
+        if ($this->hasValidOrder($cart->id)) {
+            return $cecabank_client->successCode();
+        }
+
+        $reference = (string) $post['Referencia'];
+        $amount = ((int) $post['Importe']) / 100;
+
+        try {
+            $validated = $this->validateOrder(
+                (int) $cart->id,
+                (int) Configuration::get('PS_OS_PAYMENT'),
+                $amount,
+                $this->displayName,
+                $this->l(sprintf('Cecabank transaction ID: %s.', $reference)),
+                array('transaction_id' => $reference),
+                null,
+                false,
+                $customer->secure_key
+            );
+        } catch (Exception $e) {
+            // Dos notificaciones simultáneas: la otra puede haber creado ya el pedido
+            if ($this->hasValidOrder($cart->id)) {
+                return $cecabank_client->successCode();
+            }
+            throw $e;
+        }
+
+        if (!$validated) {
+            throw new Exception(sprintf('Unable to validate order for cart id "%d".', $cart_id));
+        }
+
+        return $cecabank_client->successCode();
+    }
+
+    /**
+     * Registra un error de la comunicación online en los logs de PrestaShop
+     * (Parámetros avanzados > Registros). Nunca interrumpe el flujo.
+     *
+     * @param string $message
+     */
+    public function logNotificationError($message)
+    {
+        if (!class_exists('PrestaShopLogger')) {
+            return;
+        }
+        try {
+            $message = substr(strip_tags((string) $message), 0, 500);
+            PrestaShopLogger::addLog('Cecabank notification error: ' . $message, 3, null, 'Cecabank');
+        } catch (Exception $e) {
+            // Ignorado a propósito: un fallo al registrar no debe afectar a la respuesta
+        }
+    }
+
+    /**
+     * Comprueba si ya existe un pedido válido para el carrito.
+     *
+     * @param int $cart_id
+     *
+     * @return bool
+     */
+    protected function hasValidOrder($cart_id)
+    {
+        if (method_exists('Order', 'getIdByCartId')) {
+            $order_id = (int) Order::getIdByCartId((int) $cart_id);
+        } else {
+            // Order::getIdByCartId existe desde PrestaShop 1.7.1
+            $order_id = (int) Order::getOrderByCartId((int) $cart_id);
+        }
+        if (!$order_id) {
+            return false;
+        }
+        $order = new Order($order_id);
+
+        return Validate::isLoadedObject($order) && (bool) $order->valid;
     }
 
     public function hookDisplayAdminOrderContentOrder($params)

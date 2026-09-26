@@ -116,6 +116,22 @@ fieldset a:hover {
 </form>
 <br />
 
+<fieldset class="level1">
+    <legend>{l s='Comunicación online' mod='cecabank'}</legend>
+    <b>{l s='Configure esta URL como "URL de comunicación online" de su TPV en la consola de Cecabank:' mod='cecabank'}</b><br /><br />
+
+    <fieldset class="level2">
+        <label>{l s='URL de notificación' mod='cecabank'}</label>
+        <div class="margin-form">
+            <input type="text" value="{$cecabank.dfl.notification_url|escape:'htmlall':'UTF-8'}" readonly="readonly" onclick="this.select();" style="width:100%;max-width:600px;" />
+            <p>{l s='Sin esta URL la pasarela no puede comunicar el resultado del pago y el pedido no se registra en la tienda.' mod='cecabank'}</p>
+            <p>{l s='En PrestaShop 9 la URL antigua (/modules/cecabank/validation.php) está bloqueada por el fichero modules/.htaccess y ya no funciona. Si la tenía configurada, sustitúyala por la de arriba.' mod='cecabank'}</p>
+        </div>
+        <div class="clear"></div>
+    </fieldset>
+</fieldset>
+<br />
+
 <fieldset class="level1 space">
     <legend>{l s='Ayuda' mod='cecabank'}</legend>
     <b>{l s='Para más información contáctenos a través del correo' mod='cecabank'}</b> <a href="mailto:tpv@cecabank.es"><b>{l s='tpv@cecabank.es' mod='cecabank'}</b></a>.<br /><br />

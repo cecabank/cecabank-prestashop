@@ -50,8 +50,8 @@ class Cecabank extends PaymentModule
     /** Enlaces del aviso de actualización de seguridad */
     const SECURITY_PORTAL_URL = 'https://comercios.ceca.es/';
     const SECURITY_BULLETIN_URL = 'https://comercios.ceca.es/docs_constpv/seguridad/TPV_Virtual_Boletin_de_Seguridad_0525_001.pdf';
-    /** URL del manual del plugin. Pendiente de que Cecabank facilite la definitiva; vacía = "Manual plugin" sin enlace. */
-    const PLUGIN_MANUAL_URL = '';
+    /** URL del manual del plugin. Si se deja vacía, "Manual plugin" se muestra sin enlace. */
+    const PLUGIN_MANUAL_URL = 'https://comercios.ceca.es/resourcesPortal/descargables_portal/manual_prestashop.pdf';
 
     /** Incrementar al añadir hooks a $this->hooks para que las tiendas ya instaladas los registren. */
     const HOOKS_VERSION = '2';
@@ -88,7 +88,7 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.4';
+        $this->version = '1.1.5';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;

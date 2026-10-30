@@ -74,8 +74,10 @@ fieldset a:hover {
         <div class="clear"></div>
         <label>{l s='Clave secreta' mod='cecabank'}</label>
         <div class="margin-form">
-            <input type="password" name="secret_key" value="{$cecabank.config.secret_key|escape:'htmlall':'UTF-8'}" autocomplete="off" />
+            {* Campo de solo escritura: la clave guardada no se incluye nunca en el HTML *}
+            <input type="password" name="secret_key" value="" autocomplete="new-password" placeholder="{if $cecabank.config.has_secret_key}{l s='Clave configurada (déjalo en blanco para conservarla)' mod='cecabank'}{else}{l s='Introduce la clave secreta' mod='cecabank'}{/if}" />
             <p>{l s='Clave secreta dada por Cecabank. Si tiene 8 caracteres se usará el algoritmo SHA2; en otro caso (clave HMAC, normalmente 32 caracteres) se usará HMAC.' mod='cecabank'}</p>
+            <p>{l s='Por seguridad, la clave guardada no se muestra: deja el campo en blanco para conservar la actual o escribe una nueva para reemplazarla.' mod='cecabank'}</p>
         </div>
         <div class="clear"></div>
         <label>{l s='Terminal' mod='cecabank'}</label>

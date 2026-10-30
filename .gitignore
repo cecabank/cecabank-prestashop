@@ -1,0 +1,8 @@
+# Entorno de desarrollo: nunca debe entrar en el repositorio ni en el paquete del módulo
+.claude/
+.idea/
+.vscode/
+.buildpath
+.project
+.settings/
+.DS_Store

@@ -34,3 +34,24 @@ Con URLs amigables activadas también responde en `https://su-tienda.com/module/
 
 Si la tienda está en modo mantenimiento, añada las IP de Cecabank a la lista de IP permitidas en mantenimiento para que la notificación pueda procesarse.
 
+# Changelog
+
+## 1.1.6
+
+* Seguridad: la clave secreta pasa a ser de solo escritura en la configuración del módulo. Su valor ya no se incluye en el HTML del panel de administración; deje el campo en blanco para conservar la clave guardada o escriba una nueva para reemplazarla.
+
+## 1.1.5
+
+* Añadida la URL del manual del plugin al aviso de seguridad.
+
+## 1.1.4
+
+* Nueva URL de comunicación online a través del controlador del módulo (compatible con PrestaShop 9) y mejoras en el proceso de notificación.
+
+## 1.1.3
+
+* Corregido el uso de `Tools::encrypt`, eliminado en PrestaShop 9.
+
+## 1.1.2
+
+* La verificación de la firma de la notificación usa siempre SHA2 (o HMAC según la clave), independientemente del valor recibido.

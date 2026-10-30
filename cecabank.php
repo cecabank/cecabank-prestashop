@@ -88,7 +88,7 @@ class Cecabank extends PaymentModule
     {
         $this->name = 'cecabank';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.5';
+        $this->version = '1.1.6';
         $this->author = 'Cecabank, S.A.';
         $this->module_key = '6eb2e3f04585408d8cd6ad2f5a02e1af';
         $this->currencies = true;
@@ -239,7 +239,9 @@ class Cecabank extends PaymentModule
             if (!Tools::getValue('acquirer')) {
                 $this->_errors[] = $this->l('cecabank "acquirer" is required.');
             }
-            if (!Tools::getValue('secret_key')) {
+            // La clave es de solo escritura: un envío vacío conserva la guardada,
+            // así que solo es obligatoria cuando todavía no hay ninguna configurada.
+            if (!Tools::getValue('secret_key') && !Configuration::get('secret_key')) {
                 $this->_errors[] = $this->l('cecabank "secret_key" is required.');
             }
             if (!Tools::getValue('terminal')) {
@@ -269,7 +271,12 @@ class Cecabank extends PaymentModule
         if (Tools::isSubmit('submitUpdate')) {
             Configuration::updateValue('merchant', Tools::getValue('merchant'));
             Configuration::updateValue('acquirer', Tools::getValue('acquirer'));
-            Configuration::updateValue('secret_key', Tools::getValue('secret_key'));
+            // Clave de solo escritura (F-2026-0767): el formulario nunca precarga la clave
+            // guardada, por lo que un envío vacío significa "conservar la actual".
+            $secret_key = trim((string) Tools::getValue('secret_key'));
+            if ($secret_key !== '') {
+                Configuration::updateValue('secret_key', $secret_key);
+            }
             Configuration::updateValue('terminal', Tools::getValue('terminal'));
             Configuration::updateValue('environment', Tools::getValue('environment'));
             Configuration::updateValue('title', Tools::getValue('title'));
@@ -317,13 +324,16 @@ class Cecabank extends PaymentModule
         $config = Configuration::getMultiple(array(
             'merchant',
             'acquirer',
-            'secret_key',
             'terminal',
             'environment',
             'title',
             'description',
             'icon'
         ));
+
+        // La clave secreta no se envía nunca al navegador: la plantilla solo recibe
+        // si existe una clave configurada para mostrar el placeholder adecuado.
+        $config['has_secret_key'] = (string) Configuration::get('secret_key') !== '';
 
         $this->context->smarty->assign(array(
             'cecabank' => array(
